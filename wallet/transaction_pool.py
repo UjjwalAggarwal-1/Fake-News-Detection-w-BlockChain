@@ -1,4 +1,5 @@
 from typing import List
+
 from .transaction import Transaction
 
 # REPRESENTS THE MEMORY POOL [MEM-POOL OF TRANSACTIONS]
@@ -21,7 +22,14 @@ class TransactionPool:
 
     def check_oldest_transaction(self, timestamp):
         # GET THE OLDEST TRANSACTION
-        return False if len(self.transactions) == 0 else (min(self.transactions, key=lambda tx: tx.timestamp).timestamp <= timestamp)
+        return (
+            False
+            if len(self.transactions) == 0
+            else (
+                min(self.transactions, key=lambda tx: tx.timestamp).timestamp
+                <= timestamp
+            )
+        )
 
     def add_transaction(self, transaction):
         # ADD A TRANSACTION TO SET
@@ -29,8 +37,11 @@ class TransactionPool:
 
     # REMOVE SOME TRANSACTIONS FROM SET
     def remove(self, transactions_to_remove: List[Transaction]):
-        self.transactions = {tx for tx in self.transactions if tx.id not in {
-            tx_to_remove.id for tx_to_remove in transactions_to_remove}}
+        self.transactions = {
+            tx
+            for tx in self.transactions
+            if tx.id not in {tx_to_remove.id for tx_to_remove in transactions_to_remove}
+        }
 
         return True
 
@@ -40,7 +51,7 @@ class TransactionPool:
             return False
 
         return True
-    
+
     def verify_transactions_exist(self, transactions):
         print(f"VERIFYING TRANSACTIONS")
         # VERIFY ALL THE TRANSACTIONS EXIST & ALL ARE VERIFIED

@@ -1,18 +1,19 @@
-from flask import Flask, request
-import json
 import ast
+import json
+
+from flask import Flask, request
 
 app = Flask(__name__)
 peer_path = "./peers.json"
 
 
-@app.route('/app/clear/', methods=['POST'])
+@app.route("/app/clear/", methods=["POST"])
 def magic():
     open(peer_path, "w")
     return []
 
 
-@app.route('/app/register/', methods=['POST'])
+@app.route("/app/register/", methods=["POST"])
 def register():
     peer_data = request.json
     with open(peer_path, "a") as f:
@@ -20,7 +21,7 @@ def register():
     return list_peers()
 
 
-@app.route('/app/peers', methods=['GET'])
+@app.route("/app/peers", methods=["GET"])
 def list_peers():
     with open(peer_path, "r") as file:
         lines = file.readlines()
@@ -34,7 +35,7 @@ def list_peers():
     return json.dumps(parsed_peers)
 
 
-@app.route('/app/remove/', methods=['POST'])
+@app.route("/app/remove/", methods=["POST"])
 def remove():
     peer_data = list(request.json)
     with open(peer_path, "r") as file:
@@ -48,6 +49,6 @@ def remove():
     return list_peers()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("starting")
     app.run(port=10001)

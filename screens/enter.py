@@ -1,14 +1,16 @@
-import streamlit as st
-from blockchain.blockchain import Blockchain
-from wallet.wallet import Wallet
-from wallet.transaction_pool import TransactionPool
-from p2p.p2pserver import P2pServer
 import threading
-from background import Background
-import screens.change_screen as change_screen_
 
+import streamlit as st
+from background import Background
+
+import screens.change_screen as change_screen_
+from blockchain.blockchain import Blockchain
+from p2p.p2pserver import P2pServer
+from wallet.transaction_pool import TransactionPool
+from wallet.wallet import Wallet
 
 # START LISTENING ON P2P SERVER
+
 
 def run_p2pserver(p2pserver):
     print("Running p2p server")
@@ -36,34 +38,34 @@ def initialise(private_key=None):
         st.session_state.blockchain = Blockchain()
         st.session_state.transaction_pool = TransactionPool()
         st.session_state.wallet = Wallet(
-            private_key=private_key, name=st.session_state.name, email=st.session_state.email
+            private_key=private_key,
+            name=st.session_state.name,
+            email=st.session_state.email,
         )
 
         p2pserver = P2pServer(
-            blockchain=st.session_state.blockchain, transaction_pool=st.session_state.transaction_pool, wallet=st.session_state.wallet,
-            user_type=st.session_state.user_type
+            blockchain=st.session_state.blockchain,
+            transaction_pool=st.session_state.transaction_pool,
+            wallet=st.session_state.wallet,
+            user_type=st.session_state.user_type,
         )
 
-        background_task = Background(
-            p2pserver=p2pserver
-        )
+        background_task = Background(p2pserver=p2pserver)
 
         st.session_state.p2pserver = p2pserver
         st.session_state.background = background_task
-        
+
         p2p_thread = threading.Thread(
-            target=run_p2pserver, args=(
-                st.session_state.p2pserver,), daemon=True
+            target=run_p2pserver, args=(st.session_state.p2pserver,), daemon=True
         )
 
         background_thread = threading.Thread(
-            target=run_background_task, args=(
-                st.session_state.background,), daemon=True
+            target=run_background_task, args=(st.session_state.background,), daemon=True
         )
 
         p2p_thread.start()
         background_thread.start()
-        
+
         st.session_state.initialise = True
 
         print("EVERYTHING INITIALIZED")
@@ -73,11 +75,10 @@ def initialise(private_key=None):
 
 
 def enter():
-
     if st.session_state.screen == "enter":
         st.markdown(
             f"<h2 style='text-align: center;'>Choose a Role to Enter into Network</h2>",
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
         st.markdown(change_screen_.enter_page_message)

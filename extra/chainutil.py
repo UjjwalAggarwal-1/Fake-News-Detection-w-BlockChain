@@ -1,19 +1,20 @@
-from nacl.encoding import HexEncoder
-from nacl.signing import SigningKey
+import binascii
 import hashlib
+import json
 import time
 import uuid
+
 import numpy as np
-import json
-import extra.config as config
-from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
-import binascii
+from Crypto.Signature import pkcs1_15
+from nacl.encoding import HexEncoder
+from nacl.signing import SigningKey
+
+import extra.config as config
 
 
 class ChainUtil:
-
     @staticmethod
     def generate_32_byte_seed_from_timestamp():
         current_time = str(int(time.time()))
@@ -22,8 +23,7 @@ class ChainUtil:
 
     @staticmethod
     def gen_key_pair():
-        signing_key = SigningKey(
-            ChainUtil.generate_32_byte_seed_from_timestamp())
+        signing_key = SigningKey(ChainUtil.generate_32_byte_seed_from_timestamp())
         return signing_key, signing_key.verify_key.encode(encoder=HexEncoder).decode()
 
     @staticmethod
@@ -58,8 +58,7 @@ class ChainUtil:
 
     @staticmethod
     def encryptWithSoftwareKey(data):
-        signature = ChainUtil.sign(
-            config.VM_PRIVATE_KEY, data)
+        signature = ChainUtil.sign(config.VM_PRIVATE_KEY, data)
         data["VM_signature"] = signature
         return json.dumps(data, cls=CustomJSONEncoder)
 

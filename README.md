@@ -5,8 +5,26 @@
 This project develops a blockchain-based network for detecting fake news, leveraging NLP bases ML models and a consortium of auditors. The system operates on a consortium blockchain, enabling anonymous participation for readers to access news and submit nkews items as transactions.
 
 <p align="center">
-    <img src="FLOWCHART IMAGES/ENTER NETWORK-1.jpeg" alt="Alt text" height="400" width="400">
+    <img src="Flowchart Images/ENTER NETWORK-1.jpeg" alt="Alt text" height="400" width="400">
 </p>
+
+
+### Network Structure
+
+- **Public Network**: Allows anonymous readers to read and broadcast news, maintaining privacy.
+- **Private Network**: Comprises authenticated auditors who can propose blocks and vote on news validity.
+
+### Process Flow
+
+1. **Auditor Joining**: Requires authentication proof for registration.
+2. **Bootstrap Nodes**: Developer maintained nodes that are always active and used as entry points to the blockchain. They help discover peers in the network.
+3. **Reader Joining**: Simple registration with minimal information.
+    * News article transactions can be shared through a QR code, containing the IPFS url and metadata
+4. **News Broadcasting**: Users can upload and broadcast news, accompanied by a machine learning model score.
+5. **Block Creation and Voting**: Auditors propose and vote on blocks containing news transactions.
+6. **Validation and Ledger Addition**: Blocks receiving majority votes are added to the blockchain, making the news visible with associated authenticity metrics.
+
+
 ## Running the Project
 
 #### _Ensure your internet is working_ before proceeding
@@ -48,7 +66,7 @@ This project develops a blockchain-based network for detecting fake news, levera
 9. To upload a file, go to upload file page and upload a text file, attaching a transaction fee.
 
 <p align="center">
-    <img src="FLOWCHART IMAGES/UPLOAD NEWS.jpeg" alt="Alt text" height="400" width="400">
+    <img src="Flowchart Images/UPLOAD NEWS.jpeg" alt="Alt text" height="400" width="400">
 </p>
 
 
@@ -59,7 +77,7 @@ This project develops a blockchain-based network for detecting fake news, levera
 12. If you are chosen as the block proposer, you'll be shown the transactions in mempool on the VIEW BLOCK STATUS page to vote on them as "fake" news or not while showing the sender reputation, ML model score etc.
 
 <p align="center">
-    <img src="FLOWCHART IMAGES/CREATE BLOCK.jpeg" alt="Alt text" height="400" width="400">
+    <img src="Flowchart Images/CREATE BLOCK.jpeg" alt="Alt text" height="400" width="400">
 </p>
 
 
@@ -71,12 +89,12 @@ This project develops a blockchain-based network for detecting fake news, levera
 
 
 <p align="center">
-    <img src="FLOWCHART IMAGES/VIEW BLOCK STATUS.jpeg" alt="Alt text" height="400" width="400">
+    <img src="Flowchart Images/VIEW BLOCK STATUS.jpeg" alt="Alt text" height="400" width="400">
 </p>
 
 
    
-### Key Features
+## Key Features
 
 - **Machine Learning Model**: Utilizes a model trained on extensive datasets to assign a probability score indicating the likelihood of news being fake.
 - **Auditor Participation**: Auditors, verified through a third-party service (e.g., Intel SGX), are responsible for block creation and news validation via voting.
@@ -86,27 +104,11 @@ This project develops a blockchain-based network for detecting fake news, levera
 
 
 <p align="center">
-    <img src="FLOWCHART IMAGES/VOTING BLOCK.jpeg" alt="Alt text" height="400" width="400">
+    <img src="Flowchart Images/VOTING BLOCK.jpeg" alt="Alt text" height="400" width="400">
 </p>
 
 
-
-
-### Network Structure
-
-- **Public Network**: Allows anonymous readers to read and broadcast news, maintaining privacy.
-- **Private Network**: Comprises authenticated auditors who can propose blocks and vote on news validity.
-
-### Process Flow
-
-1. **Auditor Joining**: Requires authentication proof for registration.
-2. **Bootstrap Nodes**: Developer maintained nodes that are always active and used as entry points to the blockchain. They help discover peers in the network.
-3. **Reader Joining**: Simple registration with minimal information.
-4. **News Broadcasting**: Users can upload and broadcast news, accompanied by a machine learning model score.
-5. **Block Creation and Voting**: Auditors propose and vote on blocks containing news transactions.
-6. **Validation and Ledger Addition**: Blocks receiving majority votes are added to the blockchain, making the news visible with associated authenticity metrics.
-
 ### Output
 
-News items are displayed with their title, text, ML model score, percentage of fake votes by auditors, and sender reputation, providing a comprehensive view of their credibility.
+News items are displayed with their title, text, ML model score, percentage of fake votes by auditors, and sender reputation, providing a <b>comprehensive view of their credibility</b>.
 

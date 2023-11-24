@@ -1,6 +1,6 @@
+from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
-from Crypto.Hash import SHA256
 
 
 class Wallet:
@@ -15,14 +15,15 @@ class Wallet:
         self.__public_key = self.__private_key.publickey()
 
     def __str__(self):
-        return f"Wallet -\n\tpublicKey: {self.get_public_key()}\n\tbalance: {self.balance}"
+        return (
+            f"Wallet -\n\tpublicKey: {self.get_public_key()}\n\tbalance: {self.balance}"
+        )
 
     def sign(self, data):
         data_hash = SHA256.new(data.encode())
         signature = pkcs1_15.new(self.__private_key).sign(data_hash)
         return signature
-    
-    
+
     def sign_hashed_data(self, data_hash):
         signature = pkcs1_15.new(self.__private_key).sign(data_hash)
         return signature

@@ -2,22 +2,30 @@
 
 import hashlib
 import json
-# Assuming ChainUtil.py exists in the same directory
-from extra.chainutil import ChainUtil
-import time
-from wallet.transaction import Transaction
-from typing import *
-from wallet.wallet import Wallet
-from extra.chainutil import *
 import logging
+import time
+from typing import *
+
+from extra.chainutil import ChainUtil, CustomJSONEncoder
+from wallet.transaction import Transaction
+from wallet.wallet import Wallet
 
 # Setting up basic configuration for logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class Block:
-    def __init__(self, timestamp, last_hash, transactions: List[Transaction], validator, index: int, signature=None):
+    def __init__(
+        self,
+        timestamp,
+        last_hash,
+        transactions: List[Transaction],
+        validator,
+        index: int,
+        signature=None,
+    ):
         """
         Initialize a new block in the blockchain.
 
@@ -37,8 +45,7 @@ class Block:
         if not isinstance(last_hash, str):
             raise ValueError("Last hash must be a string")
         if not all(isinstance(tx, Transaction) for tx in transactions):
-            raise ValueError(
-                "All transactions must be instances of Transaction")
+            raise ValueError("All transactions must be instances of Transaction")
         if not isinstance(validator, str):
             raise ValueError("Validator must be a string")
         if not isinstance(index, int):
@@ -60,7 +67,9 @@ class Block:
             "index": self.index,
             "timestamp": self.timestamp,
             "last_hash": self.last_hash,
-            "transactions": [transaction.to_json() for transaction in self.transactions],
+            "transactions": [
+                transaction.to_json() for transaction in self.transactions
+            ],
             "validator": self.validator,
             "signature": str(self.signature.hex()) if self.signature else "",
             "votes": list(self.votes),
@@ -85,11 +94,14 @@ class Block:
                 index=data_json["index"],
                 timestamp=data_json["timestamp"],
                 last_hash=data_json["last_hash"],
-                transactions=[Transaction.from_json(
-                    tx_data) for tx_data in data_json["transactions"]],
+                transactions=[
+                    Transaction.from_json(tx_data)
+                    for tx_data in data_json["transactions"]
+                ],
                 validator=data_json["validator"],
-                signature=bytes.fromhex(
-                    data_json["signature"]) if data_json["signature"] else None,
+                signature=bytes.fromhex(data_json["signature"])
+                if data_json["signature"]
+                else None,
             )
             block.votes = set(data_json["votes"])
 
@@ -114,7 +126,7 @@ class Block:
             transactions=[],
             validator="Creators",
             signature=None,
-            index=1
+            index=1,
         )
 
     @staticmethod
@@ -138,8 +150,9 @@ class Block:
             timestamp = int(time.time())
             last_hash = Block.block_hash(lastBlock)
             validator = wallet.get_public_key()
-            block = Block(timestamp, last_hash, data,
-                          validator, len(blockchain.chain) + 1)
+            block = Block(
+                timestamp, last_hash, data, validator, len(blockchain.chain) + 1
+            )
             block.transactions = data
             block.signature = Block.getBlockSignature(block, wallet)
             logging.info(f"Block {block.index} created.")
@@ -154,17 +167,17 @@ class Block:
             "timestamp": block.timestamp,
             "last_hash": block.last_hash,
             "transactions": [transaction.sign for transaction in block.transactions],
-            "validator": block.validator
+            "validator": block.validator,
         }
 
         # USE SIGN AND VERIFY SIGN OF CHAINUTIL TO MAINTAIN CONSISTENCY
         signature = ChainUtil.sign(
-            private_key=wallet.get_private_key(),
-            data=block_data
+            private_key=wallet.get_private_key(), data=block_data
         )
 
         # RETURN THE CREATED BLOCK
         return signature
+
     # No pow nonce here
 
     @staticmethod
@@ -172,7 +185,7 @@ class Block:
         data = {
             "timestamp": timestamp,
             "last_hash": last_hash,
-            "transactions": [transaction.sign for transaction in transactions]
+            "transactions": [transaction.sign for transaction in transactions],
         }
 
         # Serialize the dictionary to a JSON string
@@ -180,7 +193,7 @@ class Block:
 
         # Hash the serialized JSON string using SHA256
         sha = hashlib.sha256()
-        sha.update(data_str.encode('utf-8'))
+        sha.update(data_str.encode("utf-8"))
 
         return sha.hexdigest()
 
@@ -196,7 +209,7 @@ class Block:
             "timestamp": block.timestamp,
             "last_hash": block.last_hash,
             "transactions": [transaction.sign for transaction in block.transactions],
-            "validator": block.validator
+            "validator": block.validator,
         }
 
         for transaction in block.transactions:
@@ -207,5 +220,5 @@ class Block:
         return ChainUtil.verify_signature(
             block.validator,
             block.signature,
-            block_data  # Verify the signature against the recreated hash
+            block_data,  # Verify the signature against the recreated hash
         )

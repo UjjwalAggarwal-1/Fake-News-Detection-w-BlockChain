@@ -1,25 +1,25 @@
 import sys
+
 sys.path.append(".")
 
-import change_screen as change_screen_
 import asyncio
 
+import change_screen as change_screen_
+import streamlit as st
 from account_info import show_account_info
 from become_validator import become_validator
-from vote_on_block import vote_on_block
-from upload_file import upload_file
-from view_sent_news import view_sent_news
-from sign_up import sign_up, sign_up_generate
 from enter import enter
-from view_block_status import view_block_status, propose_block
-from view_sent_blocks import view_sent_blocks
-from view_log_reputation import view_log_reputation
 from login import login
 from main_page import main_page
-from view_block_news import show_blocks_news
 from show_transactions import show_transactions
-
-import streamlit as st
+from sign_up import sign_up, sign_up_generate
+from upload_file import upload_file
+from view_block_news import show_blocks_news
+from view_block_status import propose_block, view_block_status
+from view_log_reputation import view_log_reputation
+from view_sent_blocks import view_sent_blocks
+from view_sent_news import view_sent_news
+from vote_on_block import vote_on_block
 
 screen_functions = {
     "enter": enter,
@@ -37,37 +37,34 @@ screen_functions = {
     "view_block_status": view_block_status,
     "propose_block": propose_block,
     "view_sent_blocks": view_sent_blocks,
-    "view_log_reputation": view_log_reputation
+    "view_log_reputation": view_log_reputation,
 }
-
 
 
 def main():
     print("CURRENT SCREEN = ", st.session_state.screen)
-    
+
     if st.session_state.screen in screen_functions:
         screen_functions[st.session_state.screen]()
         t = st.empty()
         change_screen_.add_space()
         change_screen_.add_space()
-        st.session_state.screen_changed = False       
+        st.session_state.screen_changed = False
         asyncio.run(change_screen_.watch(t))
-        
+
     else:
         change_screen_.screen_functions["enter"]()
 
-
-        
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
 
     st.markdown(
         "<h1 style='text-align: center;'>Fake News Detection System Utilising Blockchain</h1>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
     st.markdown(
-    """
+        """
     <style>
     .stButton>button {
         width: 350px;
@@ -97,12 +94,9 @@ if __name__ == "__main__":
 
     </style>
     """,
-    unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-    
-    
-    
-    
+
     if "screen" not in st.session_state:
         st.session_state.main_pressed = False
         st.session_state.stake_submitted = False
@@ -115,7 +109,5 @@ if __name__ == "__main__":
         st.session_state.previous_screen = "enter"
         st.session_state.screen = "enter"
         st.session_state.screen_changed = False
-    
-    main()
 
-    
+    main()

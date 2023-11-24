@@ -2,7 +2,6 @@ from Crypto.PublicKey import RSA
 
 
 def verify(private_key):
-
     try:
         rsa_private_key = RSA.import_key(private_key)
     except:
@@ -23,7 +22,7 @@ def gen_sk():
 
 
 def verify_certificate(certificate_id):
-    return certificate_id[: 4] == "ABCD"
+    return certificate_id[:4] == "ABCD"
 
 
 if __name__ == "__main__":

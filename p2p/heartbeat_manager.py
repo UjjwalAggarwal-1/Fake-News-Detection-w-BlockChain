@@ -1,9 +1,10 @@
-import requests
 import json
+import logging
 import threading
 import time
+
+import requests
 import zmq
-import logging
 
 receive_timeout = 2000
 send_timeout = 1000
@@ -12,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def printg(*args):
-    joined_string = ' '.join(str(arg) for arg in args)
+    joined_string = " ".join(str(arg) for arg in args)
     try:
         print(f"\033[92m{joined_string}\033[00m")
     except:
@@ -20,10 +21,19 @@ def printg(*args):
 
 
 class HeartbeatManager:
-    def __init__(self, myClientPort, heartbeat_timeout=20, peers={}, server_url="https://ujjwalaggarwal.pythonanywhere.com/app", accounts=None):
+    def __init__(
+        self,
+        myClientPort,
+        heartbeat_timeout=20,
+        peers={},
+        server_url="https://ujjwalaggarwal.pythonanywhere.com/app",
+        accounts=None,
+    ):
         self.myClientPort = myClientPort
         self.context = zmq.Context()
-        self.peers = peers  # map of clientPort to dictionary of lastcontacted and public key
+        self.peers = (
+            peers  # map of clientPort to dictionary of lastcontacted and public key
+        )
         self.heartbeat_timeout = heartbeat_timeout
         self.one_time = False
         self.heartbeat_counter = 0
@@ -53,7 +63,7 @@ class HeartbeatManager:
         while True:
             printg(f"Current peers: {len(self.peers)}")
             self.heartbeat_decision(isFirstTime=not (self.one_time))
-            while (self.heartbeat_counter > 0):
+            while self.heartbeat_counter > 0:
                 time.sleep(3)
             self.remove_inactive_peers()
             self.one_time = True
@@ -61,14 +71,15 @@ class HeartbeatManager:
 
     def update_last_contacted(self, clientPort):
         if clientPort in self.peers:
-            self.peers[clientPort]['lastcontacted'] = max(
-                self.peers[clientPort]['lastcontacted'], time.time())
+            self.peers[clientPort]["lastcontacted"] = max(
+                self.peers[clientPort]["lastcontacted"], time.time()
+            )
 
     def removeApi(self, clientPorts):
         printg("Removing with public key and address")
         printg(clientPorts)
 
-        url = f'{self.server_url}/remove/'
+        url = f"{self.server_url}/remove/"
 
         # printg the URL and the data to be sent
         printg(f"URL: {url}")
@@ -86,28 +97,31 @@ class HeartbeatManager:
         thread = threading.Thread(target=self.removeApi, args=(clientPorts,))
         thread.start()
         for clientPort in clientPorts:
-            self.accounts.make_inactive(self.peers[clientPort]['public_key'])
+            self.accounts.make_inactive(self.peers[clientPort]["public_key"])
             del self.peers[clientPort]
 
     def remove_inactive_peers(self):
         current_time = time.time()
-        inactive_peers = [port for port, data in self.peers.copy().items()
-                          if port != self.myClientPort and current_time - data.get('lastcontacted', 0) > self.heartbeat_timeout]
+        inactive_peers = [
+            port
+            for port, data in self.peers.copy().items()
+            if port != self.myClientPort
+            and current_time - data.get("lastcontacted", 0) > self.heartbeat_timeout
+        ]
         if len(inactive_peers) > 0:
             self.make_apicall_and_remove(inactive_peers)
 
     def send_heartbeat_to_peer(self, clientPort):
         printg("Sending heartbeat")
-        heartbeat_message = json.dumps({
-            "type": "heartbeat",
-            "clientPort": self.myClientPort
-        })
+        heartbeat_message = json.dumps(
+            {"type": "heartbeat", "clientPort": self.myClientPort}
+        )
         return self.send_heartbeat(clientPort=clientPort, message=heartbeat_message)
 
     def should_send_heartbeat(self, data, isFirstTime):
         if isFirstTime:
             return True
-        return time.time() - data['lastcontacted'] > heartbeat_interval
+        return time.time() - data["lastcontacted"] > heartbeat_interval
 
     def update_heartbeat_counter(self):
         self.heartbeat_counter -= 1
@@ -133,15 +147,15 @@ class HeartbeatManager:
 
     @staticmethod
     def getHeartBeatPort(clientPort):
-        ip, port_str = clientPort.rsplit(':', 1)
+        ip, port_str = clientPort.rsplit(":", 1)
         port = int(port_str)
         new_port = port + 1
         return f"{ip}:{new_port}"
 
     def send_heartbeat(self, message, clientPort):
-
-        reply = self.private_send_message(clientPort=self.getHeartBeatPort(clientPort),
-                                          message=message)
+        reply = self.private_send_message(
+            clientPort=self.getHeartBeatPort(clientPort), message=message
+        )
         if reply is None:
             printg(f"Peer {clientPort} is inactive")
             self.update_heartbeat_counter()
@@ -154,7 +168,8 @@ class HeartbeatManager:
 
     def start_heartbeat_server(self):
         printg(
-            f"Starting heartbeat server on port {self.getHeartBeatPort(self.myClientPort)}")
+            f"Starting heartbeat server on port {self.getHeartBeatPort(self.myClientPort)}"
+        )
         zmq_socket = self.context.socket(zmq.REP)
         zmq_socket.bind(f"tcp://{self.getHeartBeatPort(self.myClientPort)}")
 
@@ -166,17 +181,18 @@ class HeartbeatManager:
         while True:
             message = zmq_socket.recv_string()
             printg(f"Received heartbeat: {message}")
-            zmq_socket.send_string(json.dumps(
-                {"type": "heartbeat", "status": "success"}))
+            zmq_socket.send_string(
+                json.dumps({"type": "heartbeat", "status": "success"})
+            )
             message = json.loads(message)
-            self.update_last_contacted(message['clientPort'])
+            self.update_last_contacted(message["clientPort"])
 
     def addToClients(self, clientPort, public_key):
         print(f"Adding to clients to heartbeat peers{clientPort}")
-        if (clientPort not in self.peers):
+        if clientPort not in self.peers:
             self.peers[clientPort] = {
-                'public_key': public_key,
-                'lastcontacted': time.time()
+                "public_key": public_key,
+                "lastcontacted": time.time(),
             }
 
     def run(self):
