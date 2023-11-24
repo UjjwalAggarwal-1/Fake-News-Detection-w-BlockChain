@@ -1,8 +1,10 @@
 # CHANGE THE SCREEN OF GUI
-import streamlit as st
-from extra.config import BLOCK_VALIDATOR_CHOOSE_INTERVAL, START_TIME
-import time
 import asyncio
+import time
+
+import streamlit as st
+
+from extra.config import BLOCK_VALIDATOR_CHOOSE_INTERVAL, START_TIME
 
 auditors_guidelines = """
         ### Auditor Guidelines
@@ -32,7 +34,7 @@ As a reader in our network, you have the privilege to access and explore the new
 4. **Contribute to Data Availability:** Contribute indirectly by generating data through your viewership, aiding in the creation of a more informed network environment.
 """
 
-vote_on_block_message =            """
+vote_on_block_message = """
     # Vote on Received Block
 
     This section allows you to vote on the block proposed within the network.
@@ -50,7 +52,7 @@ vote_on_block_message =            """
     Below, you'll find the transactions included in the proposed block along with their details:
 
     """
-    
+
 view_block_status_message = """
             ## Block Proposer Responsibilities
             
@@ -93,7 +95,7 @@ upload_file_message = """
     
     By contributing news, you help maintain a diverse and informative network for all users.
     """
-    
+
 view_sent_news_message = """
             ## News Broadcasted by You
 
@@ -139,7 +141,7 @@ view_block_news_message = """
 
             Dive in to explore the verified news available in the blockchain and stay informed!
             """
-    
+
 blocks_broadcasted_message = """
             # Blocks Broadcasted by You
 
@@ -161,7 +163,7 @@ navbar_style = """
             }
             </style>
             """
-            
+
 reputation_log_message = """
     # Log of Your Reputation Changes
 
@@ -185,7 +187,7 @@ reputation_log_message = """
 
     Below is a table displaying the details of your reputation changes:
     """
-    
+
 # General Message for the Enter Page
 enter_page_message = """
 ### Welcome to our Consortium Blockchain Network!
@@ -195,33 +197,48 @@ Explore, learn, and engage responsibly with the news shared on our network. Anon
 Discover the power of reliable information dissemination and responsible engagement within our network. Dive in, explore, and be part of a community fostering informed insights!
 """
 
-entered_pages = set([
-    "main_page",
-    "account_info",
-    "show_transac"
-    "show_blocks",
-    "become_validator",
-    "vote_on_block",
-    "upload_file",
-    "view_sent_news",
-    "vote_on_block",
-    "view_block_status",
-    "propose_block",
-    "view_sent_blocks",
-    "view_log_reputation"
-])
+entered_pages = set(
+    [
+        "main_page",
+        "account_info",
+        "show_transac" "show_blocks",
+        "become_validator",
+        "vote_on_block",
+        "upload_file",
+        "view_sent_news",
+        "vote_on_block",
+        "view_block_status",
+        "propose_block",
+        "view_sent_blocks",
+        "view_log_reputation",
+    ]
+)
 
 
 if "validator" not in st.session_state:
     st.session_state.validator = False
 
 navigation_options = {
-    "Reader": ("Main Page", "Upload News", "Verified News", "Account Info", "Sent News", "Reputation Log"),
+    "Reader": (
+        "Main Page",
+        "Upload News",
+        "Verified News",
+        "Account Info",
+        "Sent News",
+        "Reputation Log",
+    ),
     "Auditor": (
-        "Main Page", "Upload News", "Verified News", "Account Info", "Sent News", "Reputation Log", "Transactions in Mempool",
+        "Main Page",
+        "Upload News",
+        "Verified News",
+        "Account Info",
+        "Sent News",
+        "Reputation Log",
+        "Transactions in Mempool",
         "Manage Stake in Network",
-        "Current Block Status", "Broadcasted Blocks"
-    )
+        "Current Block Status",
+        "Broadcasted Blocks",
+    ),
 }
 
 screen_mapping = {
@@ -235,7 +252,7 @@ screen_mapping = {
     "Manage Stake in Network": "become_validator",
     "Current Block Status": "view_block_status",
     "Broadcasted Blocks": "view_sent_blocks",
-    "Enter Page": "enter"
+    "Enter Page": "enter",
 }
 
 
@@ -248,19 +265,17 @@ def add_space():
 def change_screen_navbar(nav_selection):
     # Map the nav_selection to corresponding actions
     screen = screen_mapping.get(nav_selection)
-    
+
     if screen:
-        
-        
-        #IF GOING TO BECOME VALIDATOR PAGE
+        # IF GOING TO BECOME VALIDATOR PAGE
         if nav_selection == "Manage Stake in Network":
             st.session_state.stake_submitted = False
 
-        #IF GOING TO UPLOAD FILE PAGE
+        # IF GOING TO UPLOAD FILE PAGE
         if nav_selection == "Upload News":
             st.session_state.upload_file_executed = False
 
-        #CHANGE THE SCREEN
+        # CHANGE THE SCREEN
         with st.spinner("Please Wait"):
             change_screen(screen)
 
@@ -272,24 +287,27 @@ async def watch(test):
 
         current_time = int(time.time())
         time_elapsed = current_time - START_TIME.timestamp()
-        time_remaining = BLOCK_VALIDATOR_CHOOSE_INTERVAL - \
-            (time_elapsed % BLOCK_VALIDATOR_CHOOSE_INTERVAL)
+        time_remaining = BLOCK_VALIDATOR_CHOOSE_INTERVAL - (
+            time_elapsed % BLOCK_VALIDATOR_CHOOSE_INTERVAL
+        )
         test.markdown(
             f"""
             <div class="time" style="font-size: 25px;text-align: center;color: black; background-color: white; style:bold;">
                 Time Remaining in Current Block Proposing Period: {str(time_remaining)}
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
         await asyncio.sleep(1)
 
 
 def change_screen(input_string):
     print("CHANGE SCREEN CALLED ", input_string)
-    
+
     if input_string == "sign_up_generate":
         st.session_state.main_pressed = False
         st.session_state.gen_key_pressed = False
-        
+
     if input_string == "enter":
         st.session_state.main_pressed = False
         st.session_state.gen_key_pressed = False

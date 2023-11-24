@@ -1,10 +1,11 @@
 import time
+from datetime import datetime
+from typing import Type
+
 from extra.chainutil import ChainUtil
 from ipfs.ipfs_handler import IPFSHandler
 from nlp.ml_model import get_score
 from wallet.wallet import Wallet
-from typing import Type
-from datetime import datetime
 
 
 class Transaction:
@@ -31,7 +32,7 @@ class Transaction:
             "positive_votes": list(self.positive_votes),
             "negative_votes": list(self.negative_votes),
             "timestamp": self.timestamp,
-            "fee": self.fee
+            "fee": self.fee,
         }
 
     @staticmethod
@@ -55,9 +56,7 @@ class Transaction:
         return transaction
 
     def get_transaction_score(self):
-        content = IPFSHandler.get_from_ipfs(
-            self.ipfs_address
-        )
+        content = IPFSHandler.get_from_ipfs(self.ipfs_address)
 
         return get_score(content)
 
@@ -79,8 +78,9 @@ class Transaction:
         transaction.sender_address = sender_wallet.get_public_key()
 
         # SET SENDER REPUTATION
-        transaction.sender_reputation = (blockchain.get_balance(sender_wallet.get_public_key())
-                                         + blockchain.get_stake(sender_wallet.get_public_key()))
+        transaction.sender_reputation = blockchain.get_balance(
+            sender_wallet.get_public_key()
+        ) + blockchain.get_stake(sender_wallet.get_public_key())
 
         # SET SCORE FROM ML MODEL
         transaction.model_score = transaction.get_transaction_score()
@@ -95,21 +95,22 @@ class Transaction:
             "sender_address": transaction.sender_address,
             "sender_reputation": transaction.sender_reputation,
             "timestamp": transaction.timestamp,
-            "fee": transaction.fee
+            "fee": transaction.fee,
         }
 
         private_key = sender_wallet.get_private_key()
         transaction.sign = ChainUtil.sign(
-            private_key=private_key,
-            data=transaction_data
+            private_key=private_key, data=transaction_data
         )
 
         return transaction
 
     @staticmethod
     def get_transaction_data(transaction):
-        percent_fake_votes = 100*(len(transaction.negative_votes)/(
-            len(transaction.negative_votes) + len(transaction.positive_votes)))
+        percent_fake_votes = 100 * (
+            len(transaction.negative_votes)
+            / (len(transaction.negative_votes) + len(transaction.positive_votes))
+        )
 
         return f"""
                          Model Fake Score": {transaction.model_score},
@@ -118,7 +119,7 @@ class Transaction:
                         "Transaction Creation Time": {datetime.fromtimestamp(transaction.timestamp).strftime("%I:%M %p on %d %B, %Y")},
                         "Sender Reputation": {transaction.sender_reputation}
                 """
-    
+
     @staticmethod
     def verify_transaction(transaction, error_bound: float = 0.1):
         # HASH THE TRANSACTION WITH SIGNATURE AS NONE
@@ -128,12 +129,13 @@ class Transaction:
             "sender_address": transaction.sender_address,
             "sender_reputation": transaction.sender_reputation,
             "timestamp": transaction.timestamp,
-            "fee": transaction.fee
+            "fee": transaction.fee,
         }
 
         # GET THE MODEL SCORE
-        # model_score = transaction.get_transaction_score()
         # Ends up taking too much resources. not needed for proof of concept
+        
+        # model_score = transaction.get_transaction_score()
         # # Compare the model_score with transaction.model_score within the error bound
         # if abs(model_score - transaction.model_score) > error_bound:
         #     print("MODEL SCORE NOT MATCHING")
@@ -143,5 +145,5 @@ class Transaction:
         return ChainUtil.verify_signature(
             public_key=transaction.sender_address,  # Public key
             signature=transaction.sign,  # Signature to verify
-            data=transaction_data  # Hash of the content that was signed
+            data=transaction_data,  # Hash of the content that was signed
         )

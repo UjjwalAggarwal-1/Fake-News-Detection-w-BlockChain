@@ -1,16 +1,16 @@
-
-from nltk.sentiment import SentimentIntensityAnalyzer
 import os
-import pandas as pd
-from nltk.stem import PorterStemmer
-import spacy
-import string
-from textstat import flesch_reading_ease
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import spacy
 import pickle
+import string
+
 import nltk
+import pandas as pd
+import spacy
 import streamlit as st
+from nltk.sentiment import SentimentIntensityAnalyzer
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from nltk.stem import PorterStemmer
+from textstat import flesch_reading_ease
+
 nlp = None
 stemmer = None
 stop_words = None
@@ -28,50 +28,48 @@ def preprocess_text(text):
 
 
 def add_readability_score(df):
-    df['READABILITY_FRE'] = df['NEWS TEXT'].apply(
-        lambda d: flesch_reading_ease(d))
+    df["READABILITY_FRE"] = df["NEWS TEXT"].apply(lambda d: flesch_reading_ease(d))
 
 
 def add_title_length(df):
-    df['TITLE_LENGTH'] = df['NEWS TITLE'].apply(lambda d: len(d))
+    df["TITLE_LENGTH"] = df["NEWS TITLE"].apply(lambda d: len(d))
 
 
 def add_text_length(df):
-    df['TEXT LENGTH'] = df['NEWS TEXT'].apply(lambda d: len(d))
+    df["TEXT LENGTH"] = df["NEWS TEXT"].apply(lambda d: len(d))
 
 
 def add_vader_text_sentiment_score(df):
-
-    df['TEXT SENTIMENT SCORE'] = df['NEWS TEXT'].apply(
-        lambda d: sid.polarity_scores(d)['compound'])
+    df["TEXT SENTIMENT SCORE"] = df["NEWS TEXT"].apply(
+        lambda d: sid.polarity_scores(d)["compound"]
+    )
 
 
 def add_vader_title_sentiment_score(df):
-
-    df['TITLE SENTIMENT SCORE'] = df['NEWS TITLE'].apply(
-        lambda d: sid.polarity_scores(d)['compound'])
+    df["TITLE SENTIMENT SCORE"] = df["NEWS TITLE"].apply(
+        lambda d: sid.polarity_scores(d)["compound"]
+    )
 
 
 def add_sentiment_category(df, threshold):
-
     def assign_sentiment_category(score):
         if score > threshold:
             return 1
         else:
             return 0
 
-    df['SENTIMENT CATEGORY'] = df['TEXT SENTIMENT SCORE'].apply(
-        assign_sentiment_category)
+    df["SENTIMENT CATEGORY"] = df["TEXT SENTIMENT SCORE"].apply(
+        assign_sentiment_category
+    )
 
 
 def add_count_punctuation(df):
     def count_punctuation(text):
-        punctuation_count = sum(
-            [1 for char in text if char in string.punctuation])
+        punctuation_count = sum([1 for char in text if char in string.punctuation])
         return punctuation_count
 
     # Assuming you have a DataFrame called 'df' with a column 'REVIEW_TEXT'
-    df['TEXT PUNCTUATION COUNT'] = df['NEWS TEXT'].apply(count_punctuation)
+    df["TEXT PUNCTUATION COUNT"] = df["NEWS TEXT"].apply(count_punctuation)
 
 
 def add_count_capital_chars(df):
@@ -80,7 +78,7 @@ def add_count_capital_chars(df):
         return capital_count
 
     # Assuming you have a DataFrame called 'df' with a column 'REVIEW_TEXT'
-    df['TEXT CAPITAL CHARS'] = df['NEWS TEXT'].apply(count_capital_chars)
+    df["TEXT CAPITAL CHARS"] = df["NEWS TEXT"].apply(count_capital_chars)
 
 
 def add_pos_tags(df):
@@ -94,14 +92,18 @@ def add_pos_tags(df):
         return Pos_counts
 
     poscounts = df["NEWS TEXT"].apply(pos_counts)
-    df['TEXT NUM NOUNS'] = df['NEWS TEXT'].apply(
-        lambda text: count_pos(poscounts, spacy.parts_of_speech.NOUN))
-    df['TEXT NUM VERBS'] = df['NEWS TEXT'].apply(
-        lambda text: count_pos(poscounts, spacy.parts_of_speech.VERB))
-    df['TEXT NUM ADJECTIVES'] = df['NEWS TEXT'].apply(
-        lambda text: count_pos(poscounts, spacy.parts_of_speech.ADJ))
-    df['TEXT NUM ADVERBS'] = df['NEWS TEXT'].apply(
-        lambda text: count_pos(poscounts, spacy.parts_of_speech.ADV))
+    df["TEXT NUM NOUNS"] = df["NEWS TEXT"].apply(
+        lambda text: count_pos(poscounts, spacy.parts_of_speech.NOUN)
+    )
+    df["TEXT NUM VERBS"] = df["NEWS TEXT"].apply(
+        lambda text: count_pos(poscounts, spacy.parts_of_speech.VERB)
+    )
+    df["TEXT NUM ADJECTIVES"] = df["NEWS TEXT"].apply(
+        lambda text: count_pos(poscounts, spacy.parts_of_speech.ADJ)
+    )
+    df["TEXT NUM ADVERBS"] = df["NEWS TEXT"].apply(
+        lambda text: count_pos(poscounts, spacy.parts_of_speech.ADV)
+    )
 
 
 def add_named_entities(df):
@@ -110,7 +112,7 @@ def add_named_entities(df):
         ent_count = len([ent.text for ent in doc.ents])
         return ent_count
 
-    df['TEXT NUM NAMED ENTITIES'] = df['NEWS TEXT'].apply(count_entities)
+    df["TEXT NUM NAMED ENTITIES"] = df["NEWS TEXT"].apply(count_entities)
 
 
 def calculate_lexical_diversity(text):
@@ -129,28 +131,28 @@ def calculate_lexical_diversity(text):
 def get_score(content):
     global nlp, stemmer, stop_words, sid, model, scaler
 
-    nlp = spacy.load('en_core_web_sm')
+    nlp = spacy.load("en_core_web_sm")
     stemmer = PorterStemmer()
     stop_words = nlp.Defaults.stop_words
     sid = SentimentIntensityAnalyzer()
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
     model_file_path = os.path.join(current_dir, "model_1.pkl")
     with open(model_file_path, "rb") as file:
         data = pickle.load(file)
-        
+
     model = data["MODEL"]
     scaler = data["SCALER"]
 
     data = {
-        'NEWS TITLE': [content.split("\n")[0]],
-        'NEWS TEXT': [" ".join(content.split("\n")[1:])]
+        "NEWS TITLE": [content.split("\n")[0]],
+        "NEWS TEXT": [" ".join(content.split("\n")[1:])],
     }
 
     df1 = pd.DataFrame(data)
 
     # NEWS TEXT WORD COUNT
-    df1['TEXT WORD COUNT'] = df1['NEWS TEXT'].apply(lambda x: len(x.split()))
+    df1["TEXT WORD COUNT"] = df1["NEWS TEXT"].apply(lambda x: len(x.split()))
 
     # ADD COLUMN FOR NUMBER OF WORDS IN TITLE
     df1["TITLE WORD COUNT"] = df1["NEWS TITLE"].apply(lambda x: len(x.split()))
@@ -170,13 +172,19 @@ def get_score(content):
     add_count_punctuation(df1)
 
     # ADD LEXICAL DIVERSITY
-    df1['TEXT LEXICAL DIVERSITY'] = df1['NEWS TEXT'].apply(
-        calculate_lexical_diversity)
+    df1["TEXT LEXICAL DIVERSITY"] = df1["NEWS TEXT"].apply(calculate_lexical_diversity)
 
     features_numeric = [
-        'TEXT WORD COUNT', 'TITLE WORD COUNT', 'TEXT LENGTH', 'TITLE_LENGTH',
-        'TEXT SENTIMENT SCORE', 'TITLE SENTIMENT SCORE', 'READABILITY_FRE',
-        'TEXT CAPITAL CHARS', 'TEXT PUNCTUATION COUNT']
+        "TEXT WORD COUNT",
+        "TITLE WORD COUNT",
+        "TEXT LENGTH",
+        "TITLE_LENGTH",
+        "TEXT SENTIMENT SCORE",
+        "TITLE SENTIMENT SCORE",
+        "READABILITY_FRE",
+        "TEXT CAPITAL CHARS",
+        "TEXT PUNCTUATION COUNT",
+    ]
 
     X = df1[features_numeric]
     X_scaled = scaler.transform(X)

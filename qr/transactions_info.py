@@ -4,9 +4,11 @@ from datetime import datetime
 from .qr_handler import make_qr
 
 
-def show_transaction(transaction, show = 0):
-    percent_fake_votes = 100*(len(transaction.negative_votes) /
-                              (len(transaction.negative_votes) + len(transaction.positive_votes)))
+def show_transaction(transaction, show=0):
+    percent_fake_votes = 100 * (
+        len(transaction.negative_votes)
+        / (len(transaction.negative_votes) + len(transaction.positive_votes))
+    )
 
     data = f"""
 Model Fake Score: {transaction.model_score},

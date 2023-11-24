@@ -1,4 +1,5 @@
 import pandas as pd
+
 df = pd.read_csv("./WELFake_Dataset.csv")
 n = 4
 for index, row in df.iterrows():
@@ -13,5 +14,5 @@ for index, row in df.iterrows():
     # Write the data to the text file
     with open(file_name, "w") as file:
         file.write(f"{title}\n{text}")
-        
+
     print("DONE")

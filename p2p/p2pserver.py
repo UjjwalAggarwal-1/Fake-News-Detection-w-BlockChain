@@ -1,40 +1,43 @@
 import json
-from blockchain.blockchain import Blockchain
-from blockchain.block import *
-from wallet.wallet import Wallet
-from wallet.transaction_pool import TransactionPool
+import logging
+import random as random
+import socket
+import threading
+import time
 from typing import Type
-from extra.chainutil import *
-from wallet.transaction import *
-from blockchain.account import *
-from .heartbeat_manager import *
+
 import requests
 import zmq
-import logging
-import threading
-import socket
-import random as random
 
+from blockchain.account import Accounts
+from blockchain.block import Block
+from blockchain.blockchain import Blockchain
+from extra.chainutil import ChainUtil, CustomJSONEncoder
+from wallet.transaction import Transaction
+from wallet.transaction_pool import TransactionPool
+from wallet.wallet import Wallet
+
+from .heartbeat_manager import HeartbeatManager
 
 MESSAGE_TYPE = {
-    'chain': 'CHAIN',
-    'block': 'BLOCK',
-    'transaction': 'TRANSACTION',
-    'new_validator': 'NEW_VALIDATOR',
-    'vote': 'VOTE',
+    "chain": "CHAIN",
+    "block": "BLOCK",
+    "transaction": "TRANSACTION",
+    "new_validator": "NEW_VALIDATOR",
+    "vote": "VOTE",
     "block_proposer_address": "BLOCK_PROPOSER_ADDRESS",
-    "new_node": "NEW_NODE"
+    "new_node": "NEW_NODE",
 }
 
 logging.basicConfig(level=logging.INFO)
-server_url = 'https://ujjwalaggarwal.pythonanywhere.com/app'  # Local server URL
+server_url = "https://ujjwalaggarwal.pythonanywhere.com/app"  # Local server URL
 send_timeout = 5000
 receive_timeout = 5000
 heartbeat_timeout = 30
 
 
 def printy(*args):
-    joined_string = ' '.join(str(arg) for arg in args)
+    joined_string = " ".join(str(arg) for arg in args)
     try:
         print(f"\033[93m{joined_string}\033[00m")
     except:
@@ -42,7 +45,13 @@ def printy(*args):
 
 
 class P2pServer:
-    def __init__(self, blockchain: Type[Blockchain], transaction_pool: Type[TransactionPool], wallet: Type[Wallet], user_type="Reader"):
+    def __init__(
+        self,
+        blockchain: Type[Blockchain],
+        transaction_pool: Type[TransactionPool],
+        wallet: Type[Wallet],
+        user_type="Reader",
+    ):
         self.blockchain = blockchain
         self.transaction_pool = transaction_pool
         self.wallet = wallet  # assuming initialised wallet
@@ -83,16 +92,17 @@ class P2pServer:
         return reply
 
     def get_encrypted_message(self, message):
-        message['clientPort'] = self.myClientPort  # Add the clientPort
+        message["clientPort"] = self.myClientPort  # Add the clientPort
         encrypted_message = ChainUtil.encryptWithSoftwareKey(
-            message)  # Re-encode and encrypt
+            message
+        )  # Re-encode and encrypt
         return encrypted_message
 
     def register(self, public_key, clientPort):
         printy("Registering with public key and address")
-        data = {'public_key': public_key, 'address': clientPort}
+        data = {"public_key": public_key, "address": clientPort}
         try:
-            response = requests.post(f'{server_url}/register', json=data)
+            response = requests.post(f"{server_url}/register", json=data)
             printy(f"Register api. Response from server: {response}")
             return response.json()
         except requests.RequestException as e:
@@ -114,7 +124,7 @@ class P2pServer:
     def is_port_available(self, port):
         printy(f"Checking if port {port} is available")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            a = s.connect_ex(('localhost', port)) != 0
+            a = s.connect_ex(("localhost", port)) != 0
             printy(a)
             return a
 
@@ -125,7 +135,7 @@ class P2pServer:
                 break
 
             port = random.randint(50000, 65533)
-            if self.is_port_available(port) and self.is_port_available(port+1):
+            if self.is_port_available(port) and self.is_port_available(port + 1):
                 try:
                     ip_address = self.get_ip_address()
                     if ip_address is None:
@@ -144,15 +154,21 @@ class P2pServer:
             else:
                 printy(f"Port {port} is not available. Trying another port.")
 
-        self.register(clientPort=f"{ip_address}:{port}",
-                      public_key=self.wallet.get_public_key())
+        self.register(
+            clientPort=f"{ip_address}:{port}", public_key=self.wallet.get_public_key()
+        )
 
         self.get_peers()
         printy("Starting heartbeat manager")
         self.heartbeat_manager = HeartbeatManager(
-            myClientPort=self.myClientPort, peers=self.peers, server_url=server_url, accounts=self.accounts)
+            myClientPort=self.myClientPort,
+            peers=self.peers,
+            server_url=server_url,
+            accounts=self.accounts,
+        )
         heartbeat_thread = threading.Thread(
-            target=self.heartbeat_manager.run, daemon=True)
+            target=self.heartbeat_manager.run, daemon=True
+        )
         heartbeat_thread.start()
         printy("Heartbeat manager started")
         while not self.heartbeat_manager.one_time:
@@ -167,7 +183,8 @@ class P2pServer:
         while True:
             message = zmq_socket.recv_string()
             zmq_socket.send_string(
-                f"Successfully received message {message}. Sent from {self.myClientPort}")
+                f"Successfully received message {message}. Sent from {self.myClientPort}"
+            )
             self.message_received(message)
 
     def broadcast_message(self, message):
@@ -176,10 +193,11 @@ class P2pServer:
         encrypted_message = self.get_encrypted_message(message)
         printy(f"Peers: {self.peers}")
 
-        for (clientPort, data) in self.peers.copy().items():
-            if (clientPort != self.myClientPort):
-                responses.append(self.private_send_message(
-                    clientPort, encrypted_message))
+        for clientPort, data in self.peers.copy().items():
+            if clientPort != self.myClientPort:
+                responses.append(
+                    self.private_send_message(clientPort, encrypted_message)
+                )
             else:
                 responses.append(self.privateSendToSelf(encrypted_message))
 
@@ -196,26 +214,26 @@ class P2pServer:
     def send_direct_encrypted_message(self, message, clientPort):
         printy("Sending direct message")
         encrypted_message = self.get_encrypted_message(message)
-        if (clientPort == self.myClientPort):
+        if clientPort == self.myClientPort:
             return self.privateSendToSelf(encrypted_message)
         return self.private_send_message(clientPort, encrypted_message)
 
     def get_peers(self):
         printy("Fetching peers")
         try:
-            response = requests.get(f'{server_url}/peers')
+            response = requests.get(f"{server_url}/peers")
             response.raise_for_status()
             peers_list = response.json()
             printy(f"Received peers: {peers_list}")
             for peer in peers_list:
-                self.peers[peer['address']] = {
-                    'lastcontacted': time.time(),
-                    'public_key': peer['public_key']
+                self.peers[peer["address"]] = {
+                    "lastcontacted": time.time(),
+                    "public_key": peer["public_key"],
                 }
 
         except requests.RequestException as e:
             logging.error(f"Failed to fetch peers: {e}")
-            printy('Failed to fetch peers')
+            printy("Failed to fetch peers")
 
     # def listen(self):
     #     printy("Starting tcp server...")
@@ -227,7 +245,7 @@ class P2pServer:
     def send_current_block_proposer(self, clientPort):
         message = {
             "type": MESSAGE_TYPE["block_proposer_address"],
-            "address": self.block_proposer
+            "address": self.block_proposer,
         }
 
         self.send_direct_encrypted_message(message, clientPort)
@@ -235,7 +253,6 @@ class P2pServer:
     # FUNCTION CALLED WHEN A MESSAGE IS RECIEVED FROM ANOTHER CLIENT
 
     def message_received(self, message):
-
         # RECEIVED A MESSAGE
         printy(f"Received message: {message}")
 
@@ -277,8 +294,7 @@ class P2pServer:
 
             printy("ACCOUNTS: ", self.accounts.to_json())
 
-            self.transaction_pool = TransactionPool.from_json(
-                data["transaction_pool"])
+            self.transaction_pool = TransactionPool.from_json(data["transaction_pool"])
 
             printy("REPLACED TRANSACTION POOL", self.transaction_pool)
 
@@ -286,15 +302,17 @@ class P2pServer:
             printy("UPDATED BLOCK PROPOSER: ", self.block_proposer)
 
             # SET THE CURRENT RECEIVED BLOCK TO RECEIVE VOTES
-            self.received_block = Block.from_json(
-                data["received_block"]) if data["received_block"] else None
+            self.received_block = (
+                Block.from_json(data["received_block"])
+                if data["received_block"]
+                else None
+            )
             printy("REPLACED RECEIVED BLOCK: ", self.received_block)
 
-            
-            #SET THE CURRENT RECEIVED BLOCK TO RECEIVE VOTES
+            # SET THE CURRENT RECEIVED BLOCK TO RECEIVE VOTES
             if data["received_block"]:
                 self.received_block = Block.from_json(data["received_block"])
-            
+
             # SET INITIALISED TO TRUE AND ALLOW USER TO GO TO MAIN PAGE
             if not self.initialised:
                 self.initialised = True
@@ -318,9 +336,9 @@ class P2pServer:
                 return
 
             # CHECK VALIDITY OF BLOCK & ITS TRANSACTIONS
-            if (self.blockchain.is_valid_block(
-                    block, self.transaction_pool, self.accounts)):
-
+            if self.blockchain.is_valid_block(
+                block, self.transaction_pool, self.accounts
+            ):
                 # SET RECIEVED FLAG TO ALLOW VOTING
                 self.block_received = True
                 self.voted = False
@@ -344,9 +362,12 @@ class P2pServer:
             clientPort = data["clientPort"]
             self.heartbeat_manager.addToClients(clientPort, data["public_key"])
             self.accounts.addANewClient(
-                address=data["public_key"], clientPort=clientPort, userType=data["user_type"])
+                address=data["public_key"],
+                clientPort=clientPort,
+                userType=data["user_type"],
+            )
 
-            if (clientPort != self.myClientPort):
+            if clientPort != self.myClientPort:
                 self.send_chain(clientPort)
 
         elif data["type"] == MESSAGE_TYPE["vote"]:
@@ -354,8 +375,10 @@ class P2pServer:
 
     def handle_votes(self, data):
         # CHECK IF THE VOTE IS VALID [FROM AN ACTIVE VALIDATOR]
-        if (not self.accounts.accounts[data["address"]].isActive or
-                not self.accounts.accounts[data["address"]].isValidator):
+        if (
+            not self.accounts.accounts[data["address"]].isActive
+            or not self.accounts.accounts[data["address"]].isValidator
+        ):
             printy("INVALID VOTE")
             return
 
@@ -370,7 +393,8 @@ class P2pServer:
 
         # INCREMENT VOTES FOR THE TRANSACTIONS
         transactions_dict = {
-            transaction.id: transaction for transaction in self.received_block.transactions
+            transaction.id: transaction
+            for transaction in self.received_block.transactions
         }
 
         for key, value in votes:
@@ -393,7 +417,7 @@ class P2pServer:
         message = {
             "type": MESSAGE_TYPE["new_validator"],
             "public_key": self.wallet.get_public_key(),
-            "stake": stake
+            "stake": stake,
         }
 
         self.broadcast_message(message)
@@ -405,7 +429,7 @@ class P2pServer:
         message = {
             "type": MESSAGE_TYPE["new_validator"],
             "public_key": public_key,
-            "stake": stake
+            "stake": stake,
         }
 
         self.send_direct_encrypted_message(message, clientPort=clientPort)
@@ -418,37 +442,33 @@ class P2pServer:
             "type": MESSAGE_TYPE["new_node"],
             "public_key": self.wallet.get_public_key(),
             "clientPort": self.myClientPort,
-            "user_type": self.user_type
+            "user_type": self.user_type,
         }
         self.broadcast_message(message)
 
     def send_chain(self, clientPort):
         chain_as_json = [block.to_json() for block in self.blockchain.chain]
-        block_json = (self.received_block.to_json() if self.received_block else None)
+        block_json = self.received_block.to_json() if self.received_block else None
         message = {
             "type": MESSAGE_TYPE["chain"],
             "chain": chain_as_json,
             "accounts": self.accounts.to_json(),
             "transaction_pool": self.transaction_pool.to_json(),
             "block_proposer": self.block_proposer,
-            "received_block": block_json
+            "received_block": block_json,
         }
 
-        self.send_direct_encrypted_message(
-            message=message, clientPort=clientPort)
+        self.send_direct_encrypted_message(message=message, clientPort=clientPort)
 
     def broadcast_transaction(self, transaction):
         message = {
             "type": MESSAGE_TYPE["transaction"],
-            "transaction": transaction.to_json()
+            "transaction": transaction.to_json(),
         }
         self.broadcast_message(message)
 
     def broadcast_block(self, block):
-        message = {
-            "type": MESSAGE_TYPE["block"],
-            "block": block.to_json()
-        }
+        message = {"type": MESSAGE_TYPE["block"], "block": block.to_json()}
         self.broadcast_message(message)
 
     def broadcast_votes(self, votes_dict):
@@ -459,7 +479,7 @@ class P2pServer:
             "type": MESSAGE_TYPE["vote"],
             "address": self.wallet.get_public_key(),
             "votes": votes_list,
-            "block_index": self.received_block.index
+            "block_index": self.received_block.index,
         }
 
         # # Convert the message content to a JSON string
@@ -469,7 +489,7 @@ class P2pServer:
         signature = self.wallet.sign(message_json)
 
         # Append the signature to the message content
-        message_content['signature'] = signature
+        message_content["signature"] = signature
 
         # Convert the full message with signature to JSON
 

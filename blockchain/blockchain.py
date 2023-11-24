@@ -1,12 +1,12 @@
-
 from blockchain.block import Block
+
 from .account import Accounts
 
 # CLASS FOR THE NETWORK'S BLOCKCHAIN
 
 
 def printv(*args):
-    joined_string = ' '.join(str(arg) for arg in args)
+    joined_string = " ".join(str(arg) for arg in args)
     try:
         print(f"\033[95m{joined_string}\033[00m")
     except:
@@ -22,7 +22,6 @@ class Blockchain:
 
     # CHECK IF THE RECEIVED CHAIN IS VALID
     def is_valid_chain(self, chain):
-
         # FOR EVERY OTHER BLOCK
         for i in range(1, len(chain)):
             # CURRENT BLOCK
@@ -32,7 +31,10 @@ class Blockchain:
             last_block = chain[i - 1]
 
             # VERIFY BLOCK AND PREVIOUS BLOCK HASH
-            if not (Block.verify_block(block) and Block.block_hash(last_block) == block.last_hash):
+            if not (
+                Block.verify_block(block)
+                and Block.block_hash(last_block) == block.last_hash
+            ):
                 printv("Failed verification")
                 return False
 
@@ -68,7 +70,8 @@ class Blockchain:
     # VERIFY BLOCK IS VALID [WHEN RECEIVED! AS THEN THE SENDERS MUST HAVE ENOUGH BALANCE FOR TRANSACTIONS.]
     def is_valid_block(self, block, transaction_pool, accounts):
         print(
-            f"VERIFYING BLOCK . Transaction pool in json {transaction_pool.to_json()}")
+            f"VERIFYING BLOCK . Transaction pool in json {transaction_pool.to_json()}"
+        )
 
         # IF ALL TRRANSACTIIONS EXISTS AND ALL ACCOUNTS HAVE ENOUGH BALANCE
         if not (
@@ -89,7 +92,6 @@ class Blockchain:
 
     # MAKE CHANGES IN ACCOUNTS AND TRANSACTION POOL
     def append_block(self, block, transaction_pool, accounts):
-
         # UPDATE THE TRANSACTION POOL
         transaction_pool.remove(block.transactions)
 
